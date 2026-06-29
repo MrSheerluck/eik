@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Client {
     base_url: String,
     api_key: String,
+    model: String,
 }
 
 pub struct CompletionOutput {
@@ -40,16 +41,21 @@ struct AssistantMessage {
 }
 
 impl Client {
-    pub fn new(base_url: impl Into<String>, api_key: impl Into<String>) -> Self {
+    pub fn new(
+        base_url: impl Into<String>,
+        api_key: impl Into<String>,
+        model: impl Into<String>,
+    ) -> Self {
         Self {
             base_url: base_url.into(),
             api_key: api_key.into(),
+            model: model.into(),
         }
     }
 
     pub async fn complete(&self, prompt: &str) -> Result<CompletionOutput> {
         let request_body = ChatCompletionRequest {
-            model: "gpt-3.5-turbo",
+            model: &self.model,
             messages: vec![Message {
                 role: "user",
                 content: prompt,

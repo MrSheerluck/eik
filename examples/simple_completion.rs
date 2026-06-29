@@ -7,7 +7,7 @@ async fn main() -> anyhow::Result<()> {
     let api_key =
         std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set in .env or environment");
 
-    let client = Client::new("https://api.openai.com/v1", api_key);
+    let client = Client::new("https://api.openai.com/v1", api_key, "gpt-3.5-turbo");
 
     let response = client.complete("how many r's in strawberry").await?;
 
