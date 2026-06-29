@@ -4,8 +4,9 @@ use std::future::{Future, IntoFuture};
 use std::pin::Pin;
 
 pub struct Client {
+    http: reqwest::Client,
     base_url: String,
-    api_key: String,
+    auth_header: String,
     model: String,
 }
 
@@ -14,8 +15,9 @@ pub struct CompletionOutput {
 }
 
 pub struct CompletionBuilder {
+    http: reqwest::Client,
     base_url: String,
-    api_key: String,
+    auth_header: String,
     model: String,
     prompt: String,
     max_tokens: u32,
@@ -66,11 +68,10 @@ impl IntoFuture for CompletionBuilder {
 
             let url = format!("{}/chat/completions", self.base_url);
 
-            let http_client = reqwest::Client::new();
-
-            let response: ChatCompletionResponse = http_client
+            let response: ChatCompletionResponse = self
+                .http
                 .post(&url)
-                .header("Authorization", format!("Bearer {}", self.api_key))
+                .header("Authorization", &self.auth_header)
                 .json(&request_body)
                 .send()
                 .await?
@@ -128,17 +129,20 @@ impl Client {
         api_key: impl Into<String>,
         model: impl Into<String>,
     ) -> Self {
+        let api_key = api_key.into();
         Self {
+            http: reqwest::Client::new(),
             base_url: base_url.into(),
-            api_key: api_key.into(),
+            auth_header: format!("Bearer {api_key}"),
             model: model.into(),
         }
     }
 
     pub fn complete(&self, prompt: &str) -> CompletionBuilder {
         CompletionBuilder {
+            http: self.http.clone(),
             base_url: self.base_url.clone(),
-            api_key: self.api_key.clone(),
+            auth_header: self.auth_header.clone(),
             model: self.model.clone(),
             prompt: prompt.to_owned(),
             max_tokens: 256,
