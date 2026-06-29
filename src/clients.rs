@@ -49,7 +49,7 @@ impl Client {
 
     pub async fn complete(&self, prompt: &str) -> Result<CompletionOutput> {
         let request_body = ChatCompletionRequest {
-            model: "openai/gpt-oss-20b:free",
+            model: "gpt-3.5-turbo",
             messages: vec![Message {
                 role: "user",
                 content: prompt,
