@@ -1,0 +1,9 @@
+[package]
+name = "eik"
+version = "0.1.0"
+edition = "2024"
+description = "An AI agent framework for Rust"
+license = "MIT"
+repository = "https://github.com/mrsheerluck/eik"
+keywords = ["ai", "agent", "llm", "mcp", "framework"]
+categories = ["asynchronous", "development-tools"]
