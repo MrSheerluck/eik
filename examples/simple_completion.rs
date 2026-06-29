@@ -11,6 +11,8 @@ async fn main() -> anyhow::Result<()> {
 
     let response = client
         .complete("tell me a short fun fact about maths")
+        .temperature(1.0)
+        .max_tokens(100)
         .await?;
 
     println!("{}", response.text);
