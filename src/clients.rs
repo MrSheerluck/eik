@@ -14,12 +14,49 @@ pub struct CompletionOutput {
     pub text: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Role {
+    User,
+    Assistant,
+}
+
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub role: Role,
+    pub content: String,
+}
+
+impl Message {
+    pub fn user(content: impl Into<String>) -> Self {
+        Self {
+            role: Role::User,
+            content: content.into(),
+        }
+    }
+
+    pub fn assistant(content: impl Into<String>) -> Self {
+        Self {
+            role: Role::Assistant,
+            content: content.into(),
+        }
+    }
+}
+
+impl Role {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Role::User => "user",
+            Role::Assistant => "assistant",
+        }
+    }
+}
+
 pub struct CompletionBuilder {
     http: reqwest::Client,
     base_url: String,
     auth_header: String,
     model: String,
-    prompt: String,
+    messages: Vec<Message>,
     max_tokens: u32,
     temperature: f64,
     top_p: Option<f64>,
@@ -54,12 +91,18 @@ impl IntoFuture for CompletionBuilder {
 
     fn into_future(self) -> Self::IntoFuture {
         Box::pin(async move {
+            let request_messages: Vec<RequestMessage> = self
+                .messages
+                .iter()
+                .map(|m| RequestMessage {
+                    role: m.role.as_str(),
+                    content: &m.content,
+                })
+                .collect();
+
             let request_body = ChatCompletionRequest {
                 model: &self.model,
-                messages: vec![Message {
-                    role: "user",
-                    content: &self.prompt,
-                }],
+                messages: request_messages,
                 max_tokens: self.max_tokens,
                 temperature: self.temperature,
                 top_p: self.top_p,
@@ -93,7 +136,7 @@ impl IntoFuture for CompletionBuilder {
 #[derive(Debug, Serialize)]
 struct ChatCompletionRequest<'a> {
     model: &'a str,
-    messages: Vec<Message<'a>>,
+    messages: Vec<RequestMessage<'a>>,
     max_tokens: u32,
     temperature: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -103,7 +146,7 @@ struct ChatCompletionRequest<'a> {
 }
 
 #[derive(Debug, Serialize)]
-struct Message<'a> {
+struct RequestMessage<'a> {
     role: &'a str,
     content: &'a str,
 }
@@ -139,12 +182,16 @@ impl Client {
     }
 
     pub fn complete(&self, prompt: &str) -> CompletionBuilder {
+        self.chat(&[Message::user(prompt)])
+    }
+
+    pub fn chat(&self, messages: &[Message]) -> CompletionBuilder {
         CompletionBuilder {
             http: self.http.clone(),
             base_url: self.base_url.clone(),
             auth_header: self.auth_header.clone(),
             model: self.model.clone(),
-            prompt: prompt.to_owned(),
+            messages: messages.to_vec(),
             max_tokens: 256,
             temperature: 1.0,
             top_p: None,
