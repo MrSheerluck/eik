@@ -14,6 +14,34 @@ pub struct CompletionOutput {
     pub text: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Role {
+    User,
+    Assistant,
+}
+
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub role: Role,
+    pub content: String,
+}
+
+impl Message {
+    pub fn user(content: impl Into<String>) -> Self {
+        Self {
+            role: Role::User,
+            content: content.into(),
+        }
+    }
+
+    pub fn assistant(content: impl Into<String>) -> Self {
+        Self {
+            role: Role::Assistant,
+            content: content.into(),
+        }
+    }
+}
+
 pub struct CompletionBuilder {
     http: reqwest::Client,
     base_url: String,
@@ -56,7 +84,7 @@ impl IntoFuture for CompletionBuilder {
         Box::pin(async move {
             let request_body = ChatCompletionRequest {
                 model: &self.model,
-                messages: vec![Message {
+                messages: vec![RequestMessage {
                     role: "user",
                     content: &self.prompt,
                 }],
@@ -93,7 +121,7 @@ impl IntoFuture for CompletionBuilder {
 #[derive(Debug, Serialize)]
 struct ChatCompletionRequest<'a> {
     model: &'a str,
-    messages: Vec<Message<'a>>,
+    messages: Vec<RequestMessage<'a>>,
     max_tokens: u32,
     temperature: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -103,7 +131,7 @@ struct ChatCompletionRequest<'a> {
 }
 
 #[derive(Debug, Serialize)]
-struct Message<'a> {
+struct RequestMessage<'a> {
     role: &'a str,
     content: &'a str,
 }
