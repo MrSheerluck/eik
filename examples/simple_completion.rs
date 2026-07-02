@@ -1,4 +1,5 @@
-use eik::clients::{Client, Message};
+use eik::agent::Agent;
+use eik::clients::Client;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -9,19 +10,23 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::new("https://api.openai.com/v1", api_key, "gpt-4o-mini");
 
+    let agent = Agent::new(&client).system("You respond only in haiku form.");
+
+    let response = agent
+        .prompt("What is the capital of India?")
+        .temperature(0.5)
+        .max_tokens(50)
+        .await?;
+
+    println!("Agent: {}", response.text);
+
     let response = client
-        .complete("Tell me a short fun fact about maths")
+        .complete("Is Earth flat or not?")
         .temperature(1.0)
         .max_tokens(100)
         .await?;
 
-    println!("Complete: {}", response.text);
-
-    let messages = vec![Message::user("What is the capital of France?")];
-
-    let response = client.chat(&messages).await?;
-
-    println!("Chat: {}", response.text);
+    println!("Client: {}", response.text);
 
     Ok(())
 }
