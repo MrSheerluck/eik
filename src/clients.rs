@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::future::{Future, IntoFuture};
 use std::pin::Pin;
 
+#[derive(Clone)]
 pub struct Client {
     http: reqwest::Client,
     base_url: String,
@@ -18,6 +19,7 @@ pub struct CompletionOutput {
 pub enum Role {
     User,
     Assistant,
+    System,
 }
 
 #[derive(Debug, Clone)]
@@ -40,6 +42,13 @@ impl Message {
             content: content.into(),
         }
     }
+
+    pub fn system(content: impl Into<String>) -> Self {
+        Self {
+            role: Role::System,
+            content: content.into(),
+        }
+    }
 }
 
 impl Role {
@@ -47,6 +56,7 @@ impl Role {
         match self {
             Role::User => "user",
             Role::Assistant => "assistant",
+            Role::System => "system",
         }
     }
 }
